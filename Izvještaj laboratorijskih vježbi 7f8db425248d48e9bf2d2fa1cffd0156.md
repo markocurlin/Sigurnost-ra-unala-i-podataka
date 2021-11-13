@@ -22,66 +22,66 @@ cd SRP-2021-22/arp-spoofing/
 
 ### Running bash scripts
 
-```
+```bash
 ./start.sh
 ./stop.sh
 ```
 
 ### Pokrećanje iteraktivnog shella u station-1 kontenjeru
 
-```
+```python
 docker exec -it station-1 bash
 ```
 
 ### Provjera nalazi li se station-2 na istoj mreži
 
-```
+```python
 ping station-2
 ```
 
 ### Pokrećanje iteraktivnog shella u station-2 kontenjeru
 
-```
+```python
 docker exec -it station-2 bash
 ```
 
 ### Pomoću netcat-a otvaramo server na portu 9000 na kontenjeru station-1
 
-```
+```python
 netcat -lp 9000
 ```
 
 ### Pomoću netcat-a otvaramo client na hostname-u station-1 9000 na kontenjeru station-2
 
-```
+```python
 netcat station-1 9000
 ```
 
 ### Pokrećanje iteraktivnog shella u evil-station kontenjeru
 
-```
+```python
 docker exec -it evil-station bash
 ```
 
 ### Pokrećemo arpspoof u kontenjeru evil-station
 
-```
+```python
 arpspoof -t station-1 station-2
 ```
 
 ### U kontenjeru evil-station pokrećemo tcpdump i pratimo promet
 
-```
+```python
 tcpdump
 ```
 
-```
+```python
 tcpdump -X host station-1 and not arp
 ```
 
 ### Prekidamo napad
 
-```
+```python
 echo 0 > /proc/sys/net/ipv4/ip_forward
 ```
 
@@ -101,7 +101,7 @@ Vaš izazov je rezultat enkripcije odgovarajućeg personaliziranog *plaintext*a
 
 ### Kreiramo virutalno okruženje u pythonu
 
-```jsx
+```python
 C:\Users\A507\mcurlin> python -m venv mcurlin
 ```
 
@@ -257,4 +257,239 @@ def brute_force():
 
 if __name__ == "__main__":
     brute_force()
+```
+
+# 3**. Laboratorijska vježba**
+
+8.11.2021
+
+Cilj vježbe je primjeniti teoreteske spoznaje o osnovnim kritografskim mehanizmima za autentikaciju i zaštitu integriteta poruka u praktičnom primjerima. Pri tome ćemo koristiti simetrične i asimetrične krito mehanizme: *message authentication code (MAC)* i *digitalne potpise* zasnovane na javnim ključevima.
+
+### Kreiramo virutalno okruženje u pythonu
+
+```python
+C:\Users\A507\mcurlin> python -m venv mcurlin
+```
+
+### Ulazimo u direktorij i aktiviramo skriptu
+
+```python
+C:\Users\A507\mcurlin>cd mcurlin
+```
+
+```python
+C:\Users\A507\mcurlin\mcurlin>cd Scripts
+```
+
+```python
+C:\Users\A507\mcurlin\mcurlin\Scripts>activate
+```
+
+```python
+(mcurlin) C:\Users\A507\mcurlin\mcurlin\Scripts>cd ..
+```
+
+### Instaliramo paket `[cryptography](https://cryptography.io/en/latest/)`
+
+```python
+(mcurlin) C:\Users\A507\mcurlin\mcurlin>pip install cryptography
+```
+
+## Izazov 1
+
+Implementirajte zaštitu integriteta sadržaja dane poruke primjenom odgovarajućeg *message authentication code (MAC)* algoritma. Koristite pri tome HMAC mehanizam iz Python biblioteka `[cryptography](https://cryptography.io/en/latest/hazmat/primitives/mac/hmac/)`.
+
+### U lokalnom direktoriju kreirali smo tekstualnu datoteku odgovarajućeg sadržaja čiji integritet želimo zaštititi.
+
+### Učitavanje sadržaja datoteke u memoriju.
+
+```python
+ # Reading from a file
+ with open(filename, "rb") as file:
+     content = file.read()
+```
+
+### Funkcija za izračun MAC vrijednosti za danu poruku.
+
+```python
+from cryptography.hazmat.primitives import hashes, hmac
+
+def generate_MAC(key, message):
+if not isinstance(message, bytes):
+message = message.encode()
+
+h = hmac.HMAC(key, hashes.SHA256())
+h.update(message)
+signature = h.finalize()
+return signature
+```
+
+### Kreiramo file sa porukom koju treba zaštititi, pročitamo poruku iz file-a i ispisujemo je na standardni izlaz.
+
+```python
+with open("message.txt", "rb") as file:
+        content = file.read()
+
+print(content)
+```
+
+### Rezultat
+
+```python
+19f85271dc375ff9229a8680cc4cfd6839e44e50bdc29c02c19b83ff751d16a3
+```
+
+### Spremanje u file `message.sig`
+
+```python
+from cryptography.hazmat.primitives import hashes, hmac
+
+def generate_MAC(key, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    signature = h.finalize()
+    return signature
+
+if __name__ == "__main__":
+    key =b"my super secret"
+
+     # Reading from a file
+    with open("message.txt", "rb") as file:
+        content = file.read()   
+
+    mac = generate_MAC(key, content)
+
+    with open("message.sig", "wb") as file:
+        file.write(mac)
+```
+
+### Funkcija za provjeru validnosti MAC-a za danu poruku.
+
+```python
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.exceptions import InvalidSignature
+
+def verify_MAC(key, signature, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    try:
+        h.verify(signature)
+    except InvalidSignature:
+        return False
+    else:
+        return True
+```
+
+```python
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.exceptions import InvalidSignature
+
+def verify_MAC(key, signature, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    try:
+        h.verify(signature)
+    except InvalidSignature:
+        return False
+    else:
+        return True
+
+def generate_MAC(key, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    signature = h.finalize()
+    return signature
+
+if __name__ == "__main__":
+    key =b"my super secret"
+
+     # Reading from a file
+    with open("message.txt", "rb") as file:
+        content = file.read()   
+
+     # Reading from a file
+    with open("message.sig", "rb") as file:
+        mac = file.read()
+
+    is_authentic = verify_MAC(key, mac, content)
+    print(is_authentic)
+```
+
+## **Izazov 2**
+
+U ovom izazovu **želite utvrditi vremenski ispravnu skevencu transakcija (ispravan redosljed transakcija) sa odgovarajućim dionicama**. Digitalno potpisani (primjenom MAC-a) nalozi za pojedine transakcije nalaze se na lokalnom web poslužitelju.
+
+Sa servera preuzmite personalizirane izazove (direktorij `prezime_ime/mac_challege`). Nalozi se nalaze u datotekama označenim kao `order_<n>.txt` a odgovarajući autentikacijski kod (*digitalni potpis*) u datotekama `order_<n>.sig`.
+
+### Osobne izazove preuzimamo naredbom u terminalu:
+
+```python
+(mcurlin) C:\Users\A507\mcurlin\mcurlin>wget.exe -r -nH -np --reject "index.html*" [http://a507-server.local/challenges/curlin_marko](http://a507-server.local/challenges/curlin_marko)
+```
+
+```python
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.exceptions import InvalidSignature
+
+def verify_MAC(key, signature, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    try:
+        h.verify(signature)
+    except InvalidSignature:
+        return False
+    else:
+        return True
+
+def generate_MAC(key, message):
+    if not isinstance(message, bytes):
+        message = message.encode()
+
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(message)
+    signature = h.finalize()
+    return signature
+
+if __name__ == "__main__":
+    # Reading from a file
+    #with open("message.txt", "rb") as file:
+    #    content = file.read()   
+
+    # Reading from a file
+    #with open("message.sig", "rb") as file:
+    #   mac = file.read()
+
+    key = "curlin_marko".encode()
+    
+    for ctr in range(1, 11):
+        msg_filename = f"order_{ctr}.txt"
+        sig_filename = f"order_{ctr}.sig"    
+        print(msg_filename)
+        print(sig_filename)
+
+        with open(msg_filename, "rb") as file:
+            content = file.read()
+        with open(sig_filename, "rb") as file:
+            mac = file.read()
+
+        #mac = generate_MAC(key, content)
+
+        is_authentic = verify_MAC(key, mac, content)
+
+        print(f'Message {content.decode():>45} {"OK" if is_authentic else "NOK":<6}')
 ```
