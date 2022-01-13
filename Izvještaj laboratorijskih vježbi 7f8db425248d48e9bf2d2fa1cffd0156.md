@@ -942,7 +942,7 @@ if __name__ == "__main__":
         print(f"{table}\n\n")
 ```
 
-## 5**. Laboratorijska vježba**
+# 5**. Laboratorijska vježba**
 
 20.12.2021
 
@@ -1096,4 +1096,192 @@ hashcat --force -m 1800 -a 0 hash.txt dictionary/g2/dictionary_offline.txt --sta
 ```
 ragtou
 
+```
+
+# 6**. Laboratorijska vježba**
+
+10.1.2022
+
+U okviru vježe student će se upoznati s osnovnim postupkom upravljanja korisničkim računima na Linux OS-u. Pri tome će se poseban naglasak staviti na **kontrolu pristupa (eng. *access control*)** datotekama, programima i drugim resursima Linux sustava.
+
+## **Kreiranje novog korisničkog računa**
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ sudo adduser alice2
+```
+
+## Prijava kao novi korisnik
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ su - alice2
+```
+
+## **Kreiranje** još jednog korisničkog računa
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ sudo adduser bob2
+```
+
+## Odgovarajući identifikatori i grupe korisnika
+
+```
+alice2@DESKTOP-7Q0BASR:~$ id
+uid=1003(alice2) gid=1004(alice2) groups=1004(alice2)
+
+bob2@DESKTOP-7Q0BASR:~$ id
+uid=1004(bob2) gid=1005(bob2) groups=1005(bob2)
+```
+
+## U alice2 home direktoriju kreiramo novi direktorij te u njemu datoteku
+
+```
+alice2@DESKTOP-7Q0BASR:~$ cd
+alice2@DESKTOP-7Q0BASR:~$ mkdir srp
+alice2@DESKTOP-7Q0BASR:~$ cd srp
+alice2@DESKTOP-7Q0BASR:~/srp$ echo Hello world > security.txt
+alice2@DESKTOP-7Q0BASR:~/srp$ ls
+security.txt
+```
+
+## Vlasnici resursa i dopuštenja
+
+```
+alice2@DESKTOP-7Q0BASR:~/srp$ ls -l
+total 4
+-rw-rw-r-- 1 alice2 alice2 12 Jan 10 16:20 security.txt
+
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl security.txt
+# file: security.txt
+# owner: alice2
+# group: alice2
+user::rw-
+group::rw-
+other::r--
+
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl .
+# file: .
+# owner: alice2
+# group: alice2
+user::rwx
+group::rwx
+other::r-x
+
+alice2@DESKTOP-7Q0BASR:~/srp$ cat security.txt
+Hello world
+```
+
+## Oduzimamo pravo pristupa datoteci vlasniku datoteke - chmod
+
+```
+alice2@DESKTOP-7Q0BASR:~/srp$ chmod u-r security.txt
+
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl security.txt
+# file: security.txt
+# owner: alice2
+# group: alice2
+user::-w-
+group::rw-
+other::r--
+
+alice2@DESKTOP-7Q0BASR:~/srp$ cat security.txt
+cat: security.txt: Permission denied
+```
+
+## Oduzimamo pravo pristupa datoteci vlasniku datoteke ali **ne i read dopuštenje nad datotekom**
+
+```
+alice2@DESKTOP-7Q0BASR:~/srp$ chmod u+r security.txt
+alice2@DESKTOP-7Q0BASR:~/srp$ cat security.txt
+Hello world
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl security.txt
+# file: security.txt
+# owner: alice2
+# group: alice2
+user::rw-
+group::rw-
+other::r--
+
+alice2@DESKTOP-7Q0BASR:~$ chmod u+x srp
+alice2@DESKTOP-7Q0BASR:~$ cat srp/security.txt
+Hello world
+```
+
+## Korisniku bob2 uzimamo pristup
+
+U dopunskom terminalu logirajte se kao drugi korisnik (npr. `bob`) i pokušajte pročitati sadržaj datoteke `security.txt` (koja pripada drugom korisnku, npr. `alice`). Oduzmite prava pristupa novom korisniku (`bob`) sadržaju ove datoteke.
+
+### alice2
+
+```
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl security.txt
+# file: security.txt
+# owner: alice2
+# group: alice2
+user::rw-
+group::rw-
+other::r--
+
+alice2@DESKTOP-7Q0BASR:~/srp$ chmod o-r security.txt
+alice2@DESKTOP-7Q0BASR:~/srp$ getfacl security.txt
+# file: security.txt
+# owner: alice2
+# group: alice2
+user::rw-
+group::rw-
+other::---
+```
+
+### bob2
+
+## Korisniku bob2 vraćamo pristup
+
+Sada ponovo omogućite novom korisniku (`bob`) pristup sadržaju datoteke `security.txt` ali na način da taj korisnik ima pristup datoteci isključivo ako je član grupe koja je vlasnik predmetne datoteke `security.txt`. Želimo bobu dat pristup, a ostalima ne. Dodajemo ga u grupu koja ima pristup.
+
+## alice2
+
+```
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ sudo usermod -aG alice2 bob2
+```
+
+## bob2
+
+```
+bob2@DESKTOP-7Q0BASR:~$ cat /home/alice2/srp/security.txt
+Hello world
+```
+
+## **Linux procesi i kontrola pristupa**
+
+Linux procesi su programi koji se trenutno izvršavaju u odgovarajućem adresnom prostoru. Trenutno aktivne procese možete izlistati korištnjem naredbe `ps -ef`. Primjetite da proces ima vlasnika (`UID`) i jedinstveni identifikator procesa, *process identifier* `PID`
+
+### alice2
+
+```
+python lab6_g2.py
+IOError: [Errno 13] Permission denied: '/home/alice2/srp/security.txt'
+
+student@DESKTOP-7Q0BASR:/mnt/c/Users/A507$ getfacl /home/alice2/srp/security.txt
+# file: home/alice2/srp/security.txt
+# owner: alice2
+# group: alice2
+user::rw-
+user:bob2:r--
+group::rw-
+mask::rw-
+other::-
+```
+
+### bob2
+
+```
+bob2@DESKTOP-7Q0BASR:~$ python /mnt/c/Users/A507/lab6_g2.py
+Hello world
+
+bob2@DESKTOP-7Q0BASR:~$ getfacl  /mnt/c/Users/A507/lab6_g2.py
+# file: mnt/c/Users/A507/lab6_g2.py
+# owner: student
+# group: student
+user::rwx
+group::rwx
+other::rwx
 ```
